@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            width: 100%;
+        }
+        #formContainer {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #timerForm {
+            display: flex;
+            width: 100%;
+            flex-direction: column;
+            margin-bottom: 20px;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        #timerForm label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        #timerForm input[type="text"],
+        #timerForm input[type="number"] {
+            padding: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #timerForm button[type="submit"] {
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #timerForm button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        #timersContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .timer {
+            max-width: 200px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .timer h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .timer p {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .timer button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .timer button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+<h1>Timer App</h1>
+
+<div id="formContainer">
+    <form id="timerForm">
+        <label for="timerName">Nazwa Timera:</label>
+        <input type="text" id="timerName" name="timerName" required>
+
+        <label for="timerDuration">Czas (w minutach):</label>
+        <input type="number" id="timerDuration" name="timerDuration" min="1" required>
+
+        <button type="submit">Start Timer</button>
+    </form>
+</div>
+
+<div id="timersContainer"></div>
+
+<audio id="alarmAudio" src="alarm.mp3" preload="auto" loop></audio>
+
+<script>
+    document.getElementById('timerForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const timerName = document.getElementById('timerName').value;
+        const timerDuration = parseInt(document.getElementById('timerDuration').value) * 60000; // Konwersja minut na milisekundy
+
+        const timerDiv = document.createElement('div');
+        const timerId = Date.now(); // Unikalny identyfikator timera
+        timerDiv.setAttribute('id', 'timer_' + timerId);
+        timerDiv.setAttribute("time", timerDuration)
+        timerDiv.classList.add('timer');
+
+        const timerHeading = document.createElement('h2');
+        timerHeading.textContent = timerName;
+        timerDiv.appendChild(timerHeading);
+
+        const timerCounter = document.createElement('p');
+        timerDiv.appendChild(timerCounter);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Usuń Timer';
+        deleteButton.addEventListener('click', function() {
+            deleteTimer(timerId);
+        });
+        timerDiv.appendChild(deleteButton);
+
+        document.getElementById('timersContainer').appendChild(timerDiv);
+
+        // Rozpoczęcie timera
+        startTimer(timerId, timerDuration);
+    });
+
+    function startTimer(timerId, duration) {
+        const timerDiv = document.getElementById('timer_' + timerId);
+
+        function countdown() {
+            duration -= 1000;
+            timerDiv.querySelector('p').textContent = formatTime(duration);
+
+            if (duration <= 0) {
+                clearInterval(timerDiv.countdownInterval);
+                playAlarm();
+                setTimeout(function() {
+                    timerDiv.querySelector('p').textContent = formatTime(duration);
+                    startTimer(timerId, timerDiv.getAttribute("time"));
+                }, 2000); // Ponowne uruchomienie timera po 2 sekundach
+            }
+        }
+
+        countdown(); // Wywołanie funkcji countdown na początku
+
+        timerDiv.countdownInterval = setInterval(countdown, 1000);
+    }
+
+    function deleteTimer(timerId) {
+        const timerDiv = document.getElementById('timer_' + timerId);
+        clearInterval(timerDiv.countdownInterval);
+        timerDiv.remove();
+    }
+
+    function formatTime(time) {
+        const minutes = Math.floor(time / 60000);
+        const seconds = Math.floor((time % 60000) / 1000);
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function playAlarm() {
+        const alarmAudio = document.getElementById('alarmAudio');
+        alarmAudio.volume = 0.2; // Głośność alarmu na 20%
+        alarmAudio.play();
+
+        setTimeout(function() {
+            alarmAudio.pause();
+            alarmAudio.currentTime = 0;
+        }, 2000); // Alarm przestaje grać po 2 sekundach
+    }
+</script>
+</body>
+</html>
